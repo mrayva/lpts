@@ -61,9 +61,9 @@ string RenderAstTree(const AstNode &root) {
 	CreateAstTreeRecursive(tree, root, 0, 0);
 
 	TextTreeRenderer renderer;
-	std::stringstream ss;
-	renderer.ToStream(tree, ss);
-	return ss.str();
+	StringTreeRenderer output;
+	renderer.ToStream(tree, output);
+	return output.str();
 }
 
 } // namespace duckdb

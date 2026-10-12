@@ -80,9 +80,17 @@ string RenderSnapshotSuffix(optional_ptr<AtClause> snapshot, SqlDialect dialect)
 	if (dialect == SqlDialect::DUCKDB) {
 		return " " + snapshot->ToString();
 	}
-	auto parameter = LowerCopy(snapshot->Unit());
+	auto parameter = LowerCopy(snapshot->Unit().GetIdentifierName());
 	auto value = snapshot->ExpressionMutable()->ToString();
 	if (dialect == SqlDialect::SPARK && (parameter == "version" || parameter == "timestamp")) {
+		if (parameter == "version") {
+			static const std::regex unsigned_literal_cast(R"(^CAST\(([0-9]+) AS UBIGINT\)$)",
+			                                             std::regex_constants::icase);
+			std::smatch match;
+			if (std::regex_match(value, match, unsigned_literal_cast)) {
+				value = match[1].str();
+			}
+		}
 		return (parameter == "version" ? string(" VERSION AS OF ") : string(" TIMESTAMP AS OF ")) + value;
 	}
 	ThrowLptsNotImplemented("LPTS_UNSUPPORTED_TIME_TRAVEL", dialect, "time_travel", parameter + " => " + value,
